@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.BookDAO3">
+
+
+<resultMap type="kr.kh.letsKo.vo.BookVO" id="BookVO">
+	<id property="bk_num" column="bk_num"/>
+	<result property="bk_dr_num" column="bk_dr_num"/>
+	<result property="bk_me_id" column="bk_me_id"/>
+	<result property="bk_date" column="bk_date"/>
+	<result property="bk_adult" column="bk_adult"/>
+	<result property="bk_teen" column="bk_teen"/>
+	<result property="bk_totalPeople" column="bk_totalPeople"/>
+	<result property="bk_fee" column="bk_fee"/>
+	<result property="bk_usePoint" column="bk_usePoint"/>
+	<result property="bk_totalPrice" column="bk_totalPrice"/>
+	<result property="bk_cancellationStatus" column="bk_cancellationStatus"/>
+	<result property="bk_payNum" column="bk_payNum"/>
+	<result property="bk_reservedSeatNum" column="bk_reservedSeatNum"/>
+	<collection property="driveVo" ofType="kr.kh.letsKo.vo.DriveVO" column="bk_dr_num" select="selectDrive" />
+	<collection property="cancelVo" ofType="kr.kh.letsKo.vo.CancelVO" column="bk_num" select="selectCancel" />
+</resultMap>
+
+<resultMap type="kr.kh.letsKo.vo.BusVO" id="BusVO">
+		<id property="bus_num" column="bus_num"/>
+		<result property="bus_name" column="bus_name"/>
+		<result property="bus_carNumber" column="bus_carNumber"/>
+		<result property="bus_totalSeat" column="bus_totalSeat"/>
+		<result property="bus_seatGrade" column="bus_seatGrade"/>
+		<result property="bus_co_num" column="bus_co_num"/>
+		<collection property="companyVo" ofType="kr.kh.letsKo.vo.CompanyVO" column="bus_co_num" select="getCompanyName"/>
+</resultMap>
+
+<!-- 고속사와 이미지 연결 -->
+<resultMap type="kr.kh.letsKo.vo.CompanyVO" id="CompanyVO">
+		<id property="co_num" column="co_num"/>
+		<result property="co_name" column="co_name"/>
+		<collection property="companyFileVoList" ofType="kr.kh.lestKo.vo.CompanyFileVO" column="co_num" select="selectFileList"/>
+</resultMap>
+
+<resultMap type="kr.kh.letsKo.vo.DriveVO" id="DriveVO">
+		<id property="dr_num" column="dr_num"/>
+		<result property="dr_depPlandDate" column="dr_depPlandDate"/>
+		<result property="dr_depPlandTime" column="dr_depPlandTime"/>
+		<result property="dr_arrPlandTime" column="dr_arrPlandTime"/>
+		<result property="dr_reservationAvailable" column="dr_reservationAvailable"/>
+		<result property="dr_li_num" column="dr_li_num"/>
+		<result property="dr_bus_num" column="dr_bus_num"/>
+		<collection property="lineVo" ofType="kr.kh.letsKo.vo.LineVO" column="dr_li_num" select="getLineVo"/>
+		<collection property="busVo" resultMap ="BusVO"/>
+</resultMap>
+
+<resultMap type="kr.kh.letsKo.vo.CancelVO" id="CancelVO">
+		<id property="ca_num" column="ca_num"/>	
+		<result property="ca_cancelDate" column="ca_cancelDate"/>
+		<result property="ca_cancelFee" column="ca_cancelFee"/> 
+		<result property="ca_refundAmount" column="ca_refundAmount"/>
+		<result property="ca_refundPoint" column="ca_refundPoint"/> 
+		<result property="ca_bk_num" column="ca_bk_num"/>	
+</resultMap>
+
+	<!-- 운행 일정 조회 -->
+	<select id="selectDrive" resultMap="DriveVO">
+	    SELECT * FROM drive 
+	    INNER JOIN 
+			bus
+    	ON 
+    		bus_num = dr_bus_num
+    	where dr_num = #{bk_dr_num}
+	</select>
+	<select id="selectCancel" resultMap="CancelVO">
+	    SELECT * FROM cancel 
+    	where ca_bk_num = #{bk_num}
+	</select>
+	<!-- 버스/고속사/이미지 연결 -->
+	<select id="getCompanyName" resultMap ="CompanyVO">
+		select * from company where co_num = #{bus_co_num}
+	</select>
+	<!-- 고속사와 고속사파일 연결-->
+	<select id="selectFileList" resultType="kr.kh.letsKo.vo.CompanyFileVO">
+		select * from companyFile where cf_co_num = #{co_num}
+	</select>
+	<!-- drive - line 연결 -->
+	<select id="getLineVo" resultType="kr.kh.letsKo.vo.LineVO">
+		select * from line where li_num = #{dr_li_num}
+	</select>
+	<select id="selectBusNum" resultType="int">
+		SELECT 
+			dr_bus_num
+		FROM
+			drive
+		WHERE
+			dr_num = #{bk_dr_num}
+	</select>
+	
+	
+	
+	<update id="updateReservationAvailable">
+		UPDATE drive
+		SET dr_reservationAvailable = (
+		    SELECT cnt FROM (
+		        SELECT
+		            (SELECT bus_totalSeat FROM bus WHERE bus_num = 
+		                (SELECT dr_bus_num FROM drive WHERE dr_num = #{bk_dr_num})
+		            ) - 
+		            (SELECT COUNT(*) AS cnt FROM seat WHERE se_bus_code = 
+		                (SELECT dr_bus_num FROM drive WHERE dr_num = #{bk_dr_num})
+		            ) as cnt
+		    ) AS subquery
+		)
+		WHERE dr_num = #{bk_dr_num}
+	</update>
+
+
+	<select id="selectedSeatCheck" resultType="SeatVO">
+		SELECT se_selectedSeatNum
+		FROM seat
+		WHERE se_bus_code = #{bus_num}
+		ORDER BY se_selectedSeatNum
+	</select>
+	
+	<select id="selectLastBookInfo" resultMap="BookVO">
+
+		SELECT * 
+		FROM book
+		ORDER BY bk_num desc
+		LIMIT 1
+	</select>
+
+	
+	<select id="selectBookInfo" resultType="BookVO">
+		SELECT *
+		FROM book
+		WHERE bk_num = #{bk_num}
+	</select>
+	
+	<select id="selectBookList" resultMap="BookVO">
+		SELECT bk.*, ca.ca_cancelDate, dr.dr_depPlandTime
+		FROM book bk 
+		LEFT OUTER JOIN cancel ca
+		on bk.bk_num = ca.ca_bk_num
+		LEFT OUTER JOIN drive dr
+		on bk.bk_dr_num = dr_num
+		WHERE bk.bk_me_id = #{me_id}
+		AND bk.bk_cancellationStatus = #{cancelChoice}
+		<if test="startDate != null and cancelChoice != 1">
+			AND dr.dr_depPlandDate <![CDATA[ >= ]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d')
+		</if>
+		<if test="endDate != null and cancelChoice != 1">
+			AND dr.dr_depPlandDate <![CDATA[ < ]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d')
+		</if>
+		<if test="startDate != null and cancelChoice == 1">
+			AND ca.ca_cancelDate <![CDATA[ >= ]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d')
+		</if>
+		<if test="endDate != null and cancelChoice == 1">
+			AND ca.ca_cancelDate <![CDATA[ < ]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d')
+		</if>
+		<if test="curDate != null">
+	        AND (dr.dr_depPlandDate <![CDATA[ > ]]> STR_TO_DATE(#{curDate}, '%Y-%m-%d')
+	        OR (dr.dr_depPlandDate = STR_TO_DATE(#{curDate}, '%Y-%m-%d') AND dr.dr_arrPlandTime <![CDATA[ >= ]]> TIME(#{curDate})))
+    	</if>
+		ORDER BY bk.bk_num desc
+		LIMIT 
+			#{cri.pageStart}, 
+			#{cri.perPageNum}
+	</select>
+
+	<select id="selectBookListCnt" resultType="int">
+		SELECT count(*)
+		FROM book bk 
+		LEFT OUTER JOIN cancel ca
+		on bk.bk_num = ca.ca_bk_num
+		LEFT OUTER JOIN drive dr
+		on bk.bk_dr_num = dr_num
+		WHERE bk.bk_me_id = #{me_id}
+		AND bk.bk_cancellationStatus = #{cancelChoice}
+		<if test="startDate != null and cancelChoice != 1">
+			AND dr.dr_depPlandDate <![CDATA[ >= ]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d')
+		</if>
+		<if test="endDate != null and cancelChoice != 1">
+			AND dr.dr_depPlandDate <![CDATA[ < ]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d')
+		</if>
+		<if test="startDate != null and cancelChoice == 1">
+			AND ca.ca_cancelDate <![CDATA[ >= ]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d')
+		</if>
+		<if test="endDate != null and cancelChoice == 1">
+			AND ca.ca_cancelDate <![CDATA[ < ]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d')
+		</if>
+		<if test="curDate != null">
+	        AND (dr.dr_depPlandDate <![CDATA[ > ]]> STR_TO_DATE(#{curDate}, '%Y-%m-%d')
+	        OR (dr.dr_depPlandDate = STR_TO_DATE(#{curDate}, '%Y-%m-%d') AND dr.dr_arrPlandTime <![CDATA[ >= ]]> TIME(#{curDate})))
+    	</if>
+	</select>
+
+	<select id="selectPayList" resultMap="BookVO">
+		SELECT bk.*, ca.ca_cancelDate, dr.dr_depPlandTime
+		FROM book bk 
+		LEFT OUTER JOIN cancel ca
+		on bk.bk_num = ca.ca_bk_num
+		LEFT OUTER JOIN drive dr
+		on bk.bk_dr_num = dr_num
+		WHERE bk.bk_me_id = #{me_id}
+		AND bk.bk_cancellationStatus = #{cancelChoice}
+		<if test="startDate != null and cancelChoice != 1">
+			AND bk.bk_date<![CDATA[ >= ]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d')
+		</if>
+		<if test="endDate != null and cancelChoice != 1">
+			AND bk.bk_date <![CDATA[ < ]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d')
+		</if>
+		<if test="startDate != null and cancelChoice == 1">
+			AND ca.ca_cancelDate <![CDATA[ >= ]]> STR_TO_DATE(#{startDate}, '%Y-%m-%d')
+		</if>
+		<if test="endDate != null and cancelChoice == 1">
+			AND ca.ca_cancelDate <![CDATA[ < ]]> STR_TO_DATE(#{endDate}, '%Y-%m-%d')
+		</if>
+		ORDER BY bk.bk_date desc
+	</select>
+	
+	<!-- 결제내역 건수 -->
+	<select id="selectAllPayListCnt" resultType="int">
+		SELECT count(*)
+		FROM book 
+		where bk_me_id = #{me_id}
+		
+	</select>
+	
+	<!-- 예매내역 건수 -->
+	<select id="selectAllBookListCnt" resultType="int">
+		SELECT count(*)
+		FROM 
+			book 
+		JOIN 
+			drive 
+		ON 
+			bk_dr_num = dr_num
+		WHERE 
+			bk_me_id = #{me_id}
+		AND 
+			bk_cancellationStatus = 0
+		AND (dr_depPlandDate <![CDATA[ > ]]> STR_TO_DATE(#{curDate}, '%Y-%m-%d')
+	        OR (dr_depPlandDate = STR_TO_DATE(#{curDate}, '%Y-%m-%d') AND dr_arrPlandTime <![CDATA[ >= ]]> TIME(#{curDate})))
+		
+	</select>
+	
+	
+	<update id="updateBk_cancellationStatus">
+		UPDATE book
+		SET bk_cancellationStatus = 1
+		WHERE bk_num = #{ca_bk_num}
+	</update>
+	
+	<insert id="insertCancel">
+		INSERT INTO cancel(ca_cancelDate, ca_cancelFee, ca_refundAmount, ca_refundPoint, ca_bk_num)
+		VALUES(now(), #{cancelVO.ca_cancelFee}, #{cancelVO.ca_refundAmount}, #{cancelVO.ca_refundPoint}, #{cancelVO.ca_bk_num})
+	</insert>
+	
+	<select id="selectBk_ReservedSeatNum" resultType="String">
+		SELECT bk_reservedSeatNum
+		FROM book
+		WHERE bk_num = #{ca_bk_num}
+	</select>
+	
+	<delete id="deleteSeat">
+		DELETE FROM 
+			seat 
+		WHERE 
+			se_selectedSeatNum = #{seatVO.se_selectedSeatNum} 
+			AND se_bus_code = #{seatVO.se_bus_code}
+	</delete>
+	
+	<update id="returnReservationAvailable">
+		UPDATE drive
+		SET dr_reservationAvailable = dr_reservationAvailable + ${selectedSeatArrayLength}
+		WHERE dr_num = #{dr_num}
+	</update>
+</mapper>

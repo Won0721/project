@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<typeAlias type="kr.kh.letsKo.vo.MemberVO" alias="MemberVO"/>		
+		<typeAlias type="kr.kh.letsKo.vo.BoardVO" alias="BoardVO"/>		
+		<typeAlias type="kr.kh.letsKo.vo.BoardFileVO" alias="BoardFileVO"/>		
+		<typeAlias type="java.time.LocalTime" alias="LocalTime"/>
+		<typeAlias type="kr.kh.letsKo.vo.VerificationVO" alias="VerificationVO"/>		
+		<typeAlias type="kr.kh.letsKo.vo.BookVO" alias="BookVO"/>		
+		<typeAlias type="kr.kh.letsKo.vo.SeatVO" alias="SeatVO"/>		
+		<typeAlias type="kr.kh.letsKo.vo.DriveVO" alias="DriveVO"/>		
+	</typeAliases> 	
+	<typeHandlers>
+        <typeHandler handler="org.apache.ibatis.type.LocalTimeTypeHandler" javaType="LocalTime"/>
+	</typeHandlers>
+</configuration>

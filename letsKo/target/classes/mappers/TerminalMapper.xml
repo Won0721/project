@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.TerminalDAO">
+<resultMap type="kr.kh.letsKo.vo.TerminalVO" id="TerminalVo">
+		<id property="te_code" column="te_code"/>
+		<result property="te_ci_num" column="te_ci_num"/>
+		<collection property="cityVo" ofType="kr.kh.letsKo.vo.CityVO" column="te_ci_num" select="getCityName"/>
+</resultMap>
+	
+	<select id="selectCityList" resultType="kr.kh.letsKo.vo.CityVO">
+		select * from city
+		order by ci_num ASC
+	</select>
+	
+	<insert id="insertTermianl">
+		insert into `terminal`(te_code,te_ci_num) 
+		values(#{t.te_code},#{t.te_ci_num})
+	</insert>
+	
+	<!-- 터미널 하나 가져오기 -->
+	<select id="selectTerminalByCode" resultMap="TerminalVo">
+		select * from `terminal` where te_code = #{te_code}
+	</select>
+	
+	<!-- 터미널 리스트 가져오기 -->
+	<select id="selectTerminalList" resultMap="TerminalVo">
+    select * from `terminal`
+    <where>
+        <if test="cri.search != null and cri.search != ''">
+            AND te_code LIKE CONCAT('%', #{cri.search}, '%')
+        </if>
+    </where>
+    order by te_ci_num ASC
+    LIMIT #{cri.pageStart}, #{cri.perPageNum}
+</select>
+	
+	<select id="selectCountTerminalList" resultType="java.lang.Integer">
+    select count(*)
+    from `terminal`
+    <where>
+        <if test="cri.search != null and cri.search != ''">
+            AND te_code LIKE CONCAT('%', #{cri.search}, '%')
+        </if>
+    </where>
+	</select>
+	
+	<select id="selectTerminalByCiNum" resultMap="TerminalVo">
+		select DISTINCT te_code, te_ci_num from `terminal`
+		<choose>
+   			<when test='depText == ""'>
+   			JOIN line 
+			on 
+				li_te_depTerminalId = te_code
+			where 1 = 1
+			</when>
+    		<otherwise>
+    		JOIN line 
+			on 
+				li_te_arrTerminalId = te_code
+			Where li_te_depTerminalId = #{depText}
+			</otherwise>
+		</choose>
+		<if test='num != "all"'>
+		and te_ci_num = #{num}
+		</if>
+		order by te_ci_num asc    
+	</select>
+	
+	<select id="selectTerminalAjax" resultType="kr.kh.letsKo.vo.TerminalVO">
+		select DISTINCT te_code, te_ci_num from `terminal`
+		<if test='city_num != "all"'>
+		where te_ci_num = #{city_num}
+		</if>
+		order by te_ci_num asc    
+	</select>
+	
+	<select id="getAllTerminalList" resultMap="TerminalVo">
+    select * from `terminal`
+    <where>
+       <if test="cri != null and cri.search != null and cri.search != ''">
+          AND te_code LIKE CONCAT('%', #{cri.search}, '%')
+       </if>
+    </where>
+    order by te_ci_num ASC
+	</select>
+
+	<!-- 터미널과 도시 연결 코드 -->
+	<select id="getCityName" resultType="kr.kh.letsKo.vo.CityVO">
+		select * from city where ci_num = #{te_ci_num}
+	</select>
+	
+	<delete id="deleteTerminal">
+		delete from terminal where te_code = #{te_code}
+	</delete>
+	
+	<update id="updateTerminal">
+		update terminal 
+		set
+			te_code = #{te_newcode},
+			te_ci_num = #{te_ci_newnum}
+			
+		where 	
+			te_code = #{te_code}
+		AND
+			te_ci_num = #{te_ci_num}
+	
+	</update>
+	
+	<select id="isDuplicateEntry" parameterType="kr.kh.letsKo.vo.TerminalVO" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM terminal
+        WHERE te_code = #{te_code}
+    </select>
+    
+    <select id="getTerminalList" resultType="kr.kh.letsKo.vo.TerminalVO">
+		select * from terminal
+	</select>
+	
+	
+	
+	<!-- 배차조회 출발 터미널 선택시 라인 테이블에 조건에 맞는 도착터미널 리스트 출력 -->
+	<select id="getArrTerminal" resultType="kr.kh.letsKo.vo.TerminalVO">
+        SELECT te_code
+        FROM Terminal
+        Inner Join line
+        on li_te_arrTerminalId = te_code
+        WHERE 
+        	li_te_depTerminalId = #{depText} 
+     </select>
+</mapper>

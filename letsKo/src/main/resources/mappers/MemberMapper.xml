@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.MemberDAO">
+	<select id="selectMember" resultType="MemberVO">
+		SELECT
+			me_id,
+			me_pw,
+			me_phone,
+			me_yearOfBirth,
+			me_email,
+			me_gender,
+			me_authority,
+			me_session_id,
+			me_session_limit,
+			me_point,
+			me_verification
+		FROM
+			member
+		WHERE
+			me_id = #{me_id}
+	</select>
+	<insert id="insertMember">
+		INSERT INTO
+			member(
+			me_id, 
+			me_pw, 
+			me_phone, 
+			me_email,
+			me_yearOfBirth, 
+			me_gender)
+		VALUES(
+			#{member.me_id},
+			#{member.me_pw},
+			#{member.me_phone},
+			#{member.me_email},
+			#{member.me_yearOfBirth}, 
+			#{member.me_gender})
+	</insert>
+	<update id="updateMemberSession">
+		UPDATE 
+			member
+		SET 
+			me_session_id = #{user.me_session_id},
+			me_session_limit = #{user.me_session_limit}
+		WHERE
+			me_id = #{user.me_id}
+	</update>
+	<select id="selectMemberBySession" resultType="MemberVO">
+		SELECT 
+			me_id,
+			me_pw,
+			me_phone,
+			me_yearOfBirth,
+			me_email,
+			me_gender,
+			me_authority,
+			me_session_id,
+			me_session_limit,
+			me_point 
+		FROM 
+			member
+		WHERE
+			me_session_id = #{session_id} AND me_session_limit >= NOW()
+	</select>
+	<!-- 본인 인증 -->
+	<select id="checkIdVerification" resultType="VerificationVO">
+		SELECT 
+			ve_email
+		FROM 
+			verification
+		WHERE
+			ve_email = #{verificationVO.ve_email} 
+			AND ve_verification = #{verificationVO.ve_verification}
+	</select>
+	<select id="selectExistentEmail" resultType="MemberVO">
+		SELECT 
+			me_email
+		FROM 
+			member
+		WHERE
+			me_email = #{member.me_email} 
+	</select>
+	
+	<!-- 인증번호 DB에 email이 존재하면 업데이트, 없으면 인서트 -->
+	<insert id="insertVerification" parameterType="VerificationVO">
+	  INSERT INTO verification (ve_email, ve_verification)
+	  VALUES (#{verificationVO.ve_email}, #{verificationVO.ve_verification})
+	  ON DUPLICATE KEY UPDATE ve_verification = VALUES(ve_verification)
+	</insert>
+	<select id="findIdByPhone" resultType="java.lang.String">
+		SELECT 
+			me_id
+		FROM 
+			member
+		WHERE
+			me_phone = #{me_phone}
+	</select>
+	<update id="updatePwById">
+		UPDATE 
+			member
+		SET 
+			me_pw = #{memberVO.me_pw}
+		WHERE
+			me_id = #{memberVO.me_id}
+	</update>
+	
+	<select id="selectMemberInfo" resultType="MemberVO">
+		select * from member 
+		WHERE me_id = #{me_id}
+	</select>
+	<select id="selectMePoint" resultType="int">
+		select me_point from member 
+		WHERE me_id = #{me_id}
+	</select>
+	
+	
+	<update id="updateUsePoint">
+		update member
+			set me_point = me_point - #{usePoint}
+		where me_id = #{user.me_id}
+	</update>
+	
+	<update id="accumulatePoint">
+		update member
+			set me_point = me_point + (#{bk_totalPrice} *0.05) 
+		where me_id = #{user.me_id}
+	</update>
+	
+	
+	
+	
+	<!-- 회원 탈퇴 --> 
+	<delete id="deleteMember">
+		delete from member where me_id = #{user.me_id}
+	</delete>	
+	<!-- 회원 비밀번호 변경 -->
+	<update id="updatePassword">
+		UPDATE 
+			member
+		SET 
+			me_pw = #{user.me_pw}
+			
+		WHERE
+			me_id = #{user.me_id}
+	</update>
+	<!-- 휴대폰 번호 변경 -->
+	<update id="updatePhone">
+		UPDATE 
+			member
+		SET 
+			me_phone = #{user.me_phone}
+			
+		WHERE
+			me_id = #{user.me_id}
+	</update>
+	
+</mapper>

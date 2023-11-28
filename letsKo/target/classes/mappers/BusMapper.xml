@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.BusDAO">
+<resultMap type="kr.kh.letsKo.vo.BusVO" id="BusVO">
+		<id property="bus_num" column="bus_num"/>
+		<result property="bus_name" column="bus_name"/>
+		<result property="bus_carNumber" column="bus_carNumber"/>
+		<result property="bus_totalSeat" column="bus_totalSeat"/>
+		<result property="bus_seatGrade" column="bus_seatGrade"/>
+		<result property="bus_co_num" column="bus_co_num"/>
+		<collection property="companyVo" ofType="kr.kh.letsKo.vo.CompanyVO" column="bus_co_num" select="getCompanyName"/>
+</resultMap>
+
+<!-- 고속사와 이미지 연결 -->
+<resultMap type="kr.kh.letsKo.vo.CompanyVO" id="CompanyVO">
+		<id property="co_num" column="co_num"/>
+		<result property="co_name" column="co_name"/>
+		<collection property="companyFileVoList" ofType="kr.kh.lestKo.vo.CompanyFileVO" column="co_num" select="selectFileList"/>
+</resultMap>
+	<insert id="insertBus">
+		insert into bus(bus_co_num,bus_carNumber, bus_totalSeat, bus_seatGrade) 
+		values(#{bus.bus_co_num},#{bus.bus_carNumber},#{bus.bus_totalSeat},#{bus.bus_seatGrade})
+	</insert>
+	
+	<!-- cri 페이지에 맞는 버스와 고속사 가져오기 -->
+	<select id="selectBusList" resultMap="BusVO">
+		select 
+			* 
+		from
+			bus
+		INNER JOIN 
+			company
+    	ON 
+    		co_num = bus_co_num
+    	WHERE
+			co_name LIKE CONCAT('%', #{cri.search}, '%')
+		
+		order 
+			by bus_co_num desc
+		LIMIT 
+			#{cri.pageStart}, 
+			#{cri.perPageNum}
+	</select>
+		
+	<!-- 버스와 고속사 연결 / resultType = "kr.kh.letsKo.vo.CompanyVO" 에서 resultMap 으로 변경  -->
+	<select id="getCompanyName" resultMap ="CompanyVO">
+		select * from company where co_num = #{bus_co_num}
+	</select>
+	
+	<select id="selectBus" resultType="kr.kh.letsKo.vo.BusVO">
+		select * from bus where bus_num  = #{bus_num}
+	</select>
+	<select id="selectBusbyName" resultType="kr.kh.letsKo.vo.BusVO">
+		select * from bus where bus_carNumber = #{bus_carNumber}
+	</select>
+	
+	<select id="selectCountBusList" resultType="java.lang.Integer">
+		select count(*)
+		from bus
+	</select>
+	
+	<select id="getAllBusList" resultMap="BusVO">
+		select * from bus order by bus_co_num desc
+	</select>
+	
+	<select id="getCompanyNameByCoNum" resultType="String">
+    SELECT co_name FROM company WHERE co_num = #{co_num}
+	</select>
+	
+
+	<select id="getALlBusList" resultMap="BusVO">
+		select * from bus where bus_num  = #{bus_num}
+	</select>
+	
+	<delete id="deleteBus">
+		delete from bus where bus_num = #{bus_num}
+	</delete>
+	
+	<select id="getBusByNum" resultType="kr.kh.letsKo.vo.BusVO">
+    select * from bus where bus_num  = #{bus_num}
+	</select>
+	
+	
+	
+	
+	<update id="updateBus">
+		update bus 
+		set
+			bus_carNumber = #{bus.bus_carNumber},
+			bus_co_num = #{bus.bus_co_num}
+		where 	
+			bus_num = #{bus.bus_num}
+	</update>
+	
+	<!-- 고속사와 고속사파일 연결-->
+	<select id="selectFileList" resultType="kr.kh.letsKo.vo.CompanyFileVO">
+		select * from companyFile where cf_co_num = #{co_num}
+	</select>
+	
+</mapper>

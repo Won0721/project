@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.CompanyDAO">
+<resultMap type="kr.kh.letsKo.vo.CompanyVO" id="CompanyVO">
+		<id property="co_num" column="co_num"/>
+		<result property="co_name" column="co_name"/>
+		<collection property="companyFileVoList" ofType="kr.kh.lestKo.vo.CompanyFileVO" column="co_num" select="selectFileList"/>
+</resultMap>
+
+	<insert id="insertCompany" useGeneratedKeys="true" keyProperty="company.co_num">
+		insert into company(co_num, co_name)
+		value(#{company.co_num},#{company.co_name})
+	</insert>
+
+	<insert id="insertFile">
+		insert into companyfile(cf_name, cf_originalname, cf_co_num) 
+		values(#{companyfile.cf_name},#{companyfile.cf_originalname},#{companyfile.cf_co_num})
+	</insert>
+
+	<select id="selectCompanyList" resultMap="CompanyVO">
+		select * from company
+		order by co_num desc
+	</select>
+
+	<select id="selectCompany" resultType="kr.kh.letsKo.vo.CompanyVO">
+		select * from company where co_num  = #{co_num}
+	</select>
+	<select id="selectCompanyByName" resultType="kr.kh.letsKo.vo.CompanyVO">
+		select * from company where co_name  = #{co_name}
+	</select>
+	
+	<select id="selectFile" resultType="kr.kh.letsKo.vo.CompanyFileVO">
+		select * from companyFile where cf_num  = #{cf_num}
+	</select>
+
+	<select id="selectFileList" resultType="kr.kh.letsKo.vo.CompanyFileVO">
+		select * from companyFile where cf_co_num = #{co_num}
+	</select>
+
+	<select id="selectCompanyFile" resultType="kr.kh.letsKo.vo.CompanyFileVO">
+		select * from companyFile where cf_co_num = #{cf_co_num}
+	</select>
+
+	<delete id="deleteBusByCompany">
+		delete from bus where bus_co_num = #{bus_co_num}
+	</delete>
+
+	<delete id="deleteCompany">
+		delete from company where co_num = #{co_num}
+	</delete>
+
+	<delete id="deleteCompanyFile">
+		delete from companyFile where cf_co_num = #{cf_co_num}
+	</delete>
+
+	<update id="updateCompany">
+		update company 
+		set
+			co_name = #{company.co_name}
+		where 	
+			co_num = #{company.co_num}
+	</update>
+
+	<update id="updateCompanyName">
+		update company 
+		set
+			co_name = #{company.co_name}
+		where 	
+			co_num = #{company.co_num}
+	</update>
+	
+</mapper>

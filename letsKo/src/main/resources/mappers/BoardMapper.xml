@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.BoardDAO">
+	<select id="selectBoardList" resultType="BoardVO">
+		SELECT
+			*
+		FROM 
+			board
+		<if test='cri.type == "all"'>
+		WHERE 
+			bo_title LIKE CONCAT('%', #{cri.search}, '%')
+		OR 
+			bo_contents LIKE CONCAT('%', #{cri.search}, '%')
+		</if>
+		<if test='cri.type == "bo_title"'>
+		WHERE
+			bo_title LIKE CONCAT('%', #{cri.search}, '%')
+		</if>
+		<if test='cri.type == "bo_contents"'>
+		WHERE
+			bo_contents LIKE CONCAT('%', #{cri.search}, '%')	
+		</if>
+		ORDER BY 
+			bo_num DESC
+		LIMIT 
+			#{cri.pageStart}, 
+			#{cri.perPageNum}
+	</select>
+	<select id="selectCountBoardList" resultType="java.lang.Integer">
+		SELECT
+			count(*)
+		FROM 
+			board
+		<if test='cri.type == "all"'>
+		WHERE 
+			bo_title LIKE CONCAT('%', #{cri.search}, '%')
+		OR 
+			bo_contents LIKE CONCAT('%', #{cri.search}, '%')
+		</if>
+		<if test='cri.type == "bo_title"'>
+		WHERE
+			bo_title LIKE CONCAT('%', #{cri.search}, '%')
+		</if>
+		<if test='cri.type == "bo_contents"'>
+		WHERE
+			bo_contents LIKE CONCAT('%', #{cri.search}, '%')	
+		</if>
+	</select>
+	<select id="selectBoard" resultType="BoardVO">
+		SELECT 
+			*
+		FROM
+			board
+		WHERE
+			bo_num = #{bo_num}
+	</select>
+	<select id="selectBoardFileList" resultType="BoardFileVO">
+		SELECT 
+			*
+		FROM
+			boardfile
+		WHERE
+			bf_bo_num = #{bo_num}
+	</select>
+	<update id="updateBoardViews">
+		UPDATE
+			board
+		SET	
+			bo_views = bo_views + 1
+		WHERE
+			bo_num = #{bo_num}
+	</update>
+	
+	<select id="selectBoardFile" resultType="BoardFileVO">
+		select * from boardfile where bf_num = #{bf_num}
+	</select>
+	
+	<delete id="deleteBoardFile">
+		delete from boardfile where bf_num = #{bf_num}
+	</delete>
+	
+	<select id="selectBoardFileNumber" resultType="java.lang.Integer">
+		SELECT 
+			bf_num
+		FROM
+			boardfile
+		WHERE
+			bf_bo_num = #{bf_bo_num}
+		LIMIT 1
+	</select>
+	
+	<!-- 관리자 -->
+	<!-- 공지사항 등록--> 
+	<insert id="insertBoardAdmin">
+		INSERT INTO board(
+			bo_title, 
+			bo_contents,
+			bo_me_id
+		)
+		VALUES(  
+			#{board.bo_title}, 
+			#{board.bo_contents},
+			#{board.bo_me_id}
+		)
+	</insert>
+	<!-- 공지사항 파일 등록--> 
+	<insert id="insertBoardFileAdmin">
+		INSERT INTO boardfile(
+			bf_name,
+			bf_originalName,
+			bf_bo_num
+		)
+		VALUES(
+			#{boardFileVO.bf_name},
+			#{boardFileVO.bf_originalName},
+			(SELECT MAX(bo_num) FROM board)
+		) 
+	</insert>
+	<!-- 공지사항 수정--> 
+	<update id="boardUpdateAdmin">
+		UPDATE
+			board
+		SET
+			bo_title = #{board.bo_title},
+			bo_contents = #{board.bo_contents},
+			bo_modDate = NOW()
+		WHERE
+			bo_num = #{board.bo_num}
+	</update>
+	<!-- 공지사항 삭제--> 
+	<delete id="boardDeleteAdmin">
+		DELETE FROM
+			board
+		WHERE
+			bo_num = #{bo_num}
+	</delete>
+	
+	
+</mapper>

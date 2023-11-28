@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.DriveDAO">
+<resultMap type="kr.kh.letsKo.vo.DriveVO" id="DriveVO">
+		<id property="dr_num" column="dr_num"/>
+		<result property="dr_depPlandDate" column="dr_depPlandDate"/>
+		<result property="dr_depPlandTime" column="dr_depPlandTime"/>
+		<result property="dr_arrPlandTime" column="dr_arrPlandTime"/>
+		<result property="dr_reservationAvailable" column="dr_reservationAvailable"/>
+		<result property="dr_li_num" column="dr_li_num"/>
+		<result property="dr_bus_num" column="dr_bus_num"/>
+		<collection property="lineVo" ofType="kr.kh.letsKo.vo.LineVO" column="dr_li_num" select="getLineVo"/>
+		<collection property="busVo" resultMap ="BusVO"/>
+</resultMap>
+
+<resultMap type="kr.kh.letsKo.vo.BusVO" id="BusVO">
+		<id property="bus_num" column="bus_num"/>
+		<result property="bus_name" column="bus_name"/>
+		<result property="bus_carNumber" column="bus_carNumber"/>
+		<result property="bus_totalSeat" column="bus_totalSeat"/>
+		<result property="bus_seatGrade" column="bus_seatGrade"/>
+		<result property="bus_co_num" column="bus_co_num"/>
+		<collection property="companyVo" ofType="kr.kh.letsKo.vo.CompanyVO" column="bus_co_num" select="getCompanyName"/>
+</resultMap>
+<!-- 고속사와 이미지 연결 -->
+<resultMap type="kr.kh.letsKo.vo.CompanyVO" id="CompanyVO">
+		<id property="co_num" column="co_num"/>
+		<result property="co_name" column="co_name"/>
+		<collection property="companyFileVoList" ofType="kr.kh.lestKo.vo.CompanyFileVO" column="co_num" select="selectFileList"/>
+</resultMap>
+
+
+	<!-- 운행 일정 리스트 조회 -->
+	<select id="selectDriveList" resultMap="DriveVO">
+	    SELECT * FROM drive 
+	    INNER JOIN 
+			bus
+    	ON 
+    		bus_num = dr_bus_num
+    	order by dr_depPlandDate DESC
+	</select>
+
+	<!-- 운행 일정 추가 -->
+    <insert id="insertDrive" parameterType="kr.kh.letsKo.vo.DriveVO">
+        INSERT INTO drive (dr_depPlandDate, dr_depPlandTime, dr_arrPlandTime, dr_li_num, dr_bus_num, dr_reservationAvailable)
+        VALUES (#{drive.dr_depPlandDate}, #{drive.dr_depPlandTime}, #{drive.dr_arrPlandTime}, #{drive.dr_li_num}, #{drive.dr_bus_num}, #{drive.dr_reservationAvailable})
+    </insert>
+    
+    <!-- 운행 일정 삭제 -->
+    <delete id="deleteDriveByNum" parameterType="int">
+        DELETE FROM drive WHERE dr_num = #{dr_num}
+    </delete>
+    
+    <!-- 운행 일정 번호로 조회 -->
+    <select id="getDriveByNumber" resultType="kr.kh.letsKo.vo.DriveVO">
+        SELECT * FROM drive WHERE dr_num = #{dr_num}
+    </select>
+    
+    <!-- 운행 일정 수정 -->
+    <update id="updateDrive" parameterType="kr.kh.letsKo.vo.DriveVO">
+        UPDATE drive SET
+    <if test="drive.dr_li_num != null"> dr_li_num = #{drive.dr_li_num},</if>
+    <if test="drive.dr_depPlandDate != null">dr_depPlandDate = #{drive.dr_depPlandDate},</if>
+    <if test="drive.dr_depPlandTime != null">dr_depPlandTime = #{drive.dr_depPlandTime},</if>
+    <if test="drive.dr_bus_num != null">dr_bus_num = #{drive.dr_bus_num},</if>    
+    <if test="drive.dr_arrPlandTime != null">dr_arrPlandTime = #{drive.dr_arrPlandTime},</if>
+    <if test="drive.dr_reservationAvailable != null">dr_reservationAvailable = #{drive.dr_reservationAvailable}</if>  
+        WHERE dr_num = #{drive.dr_num}
+    </update>
+
+    
+    <!-- 운행 일정 날짜별 조회 -->
+	<select id="getScheduleByDate" resultMap="DriveVO">
+	    SELECT * FROM drive 
+	    INNER JOIN bus ON bus_num = dr_bus_num
+	    WHERE dr_depPlandDate = #{date}
+	    ORDER BY dr_depPlandTime ASC
+	</select>
+
+
+	<!-- drive - line 연결 -->
+	<select id="getLineVo" resultType="kr.kh.letsKo.vo.LineVO">
+		select * from line where li_num = #{dr_li_num}
+	</select>
+	
+	<!-- 버스/고속사/이미지 연결 -->
+	<select id="getCompanyName" resultMap ="CompanyVO">
+		select * from company where co_num = #{bus_co_num}
+	</select>
+	
+	<!-- 고속사와 고속사파일 연결-->
+	<select id="selectFileList" resultType="kr.kh.letsKo.vo.CompanyFileVO">
+		select * from companyFile where cf_co_num = #{co_num}
+	</select>
+	
+	<select id="getDriveByNum"  resultMap="DriveVO">
+		select * from drive 
+		INNER JOIN 
+			bus
+    	ON 
+    		bus_num = dr_bus_num
+    	where dr_num = #{dr_num}
+	</select>
+	<select id="selectDrivePlan" resultMap="DriveVO">
+		select * from drive 
+		INNER JOIN 
+			line
+    	ON 
+    		dr_li_num = li_num
+    	INNER JOIN
+    		bus
+    	ON 
+    		bus_num = dr_bus_num
+    	where li_te_depTerminalId = #{te_dep}
+    	AND li_te_arrTerminalId = #{te_arr}
+    	AND dr_depPlandDate = #{date}
+    	<if test='seat != "전체"'>
+		AND bus_seatGrade = #{seat}
+		</if>	
+    	ORDER BY dr_depPlandTime ASC
+	</select>
+	
+	
+	
+</mapper>

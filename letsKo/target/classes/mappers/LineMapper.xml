@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.LineDAO">
+
+	<!-- 노선 추가 -->
+    <insert id="insertLine" parameterType="kr.kh.letsKo.vo.LineVO">
+        INSERT INTO line (li_distance, li_travelTime, li_use, li_te_depTerminalId, li_te_arrTerminalId)
+        VALUES (#{line.li_distance}, #{line.li_travelTime}, #{line.li_use}, #{line.li_te_depTerminalId}, #{line.li_te_arrTerminalId})
+    </insert>
+	<select id="isDuplicateLine" resultType="java.lang.Boolean" parameterType="kr.kh.letsKo.vo.LineVO">
+	    SELECT COUNT(*) > 0
+	    FROM line
+	    WHERE li_te_depTerminalId = #{line.li_te_depTerminalId}
+	      AND li_te_arrTerminalId = #{line.li_te_arrTerminalId}
+	</select>
+    <!-- 노선 삭제 -->
+    <delete id="deleteLineByNum" parameterType="int">
+        DELETE FROM line WHERE li_num = #{li_num}
+    </delete>
+    <!-- 노선 리스트 조회 -->
+    <select id="selectLineList" resultType="kr.kh.letsKo.vo.LineVO">
+        SELECT * FROM line
+    </select>
+    <!-- 노선 수정 -->
+    <update id="updateLine" parameterType="kr.kh.letsKo.vo.LineVO">
+    UPDATE line
+    SET
+    <if test="line.li_distance != null">li_distance = #{line.li_distance},</if>
+    <if test="line.li_travelTime != null">li_travelTime = #{line.li_travelTime},</if>
+    <if test="line.li_te_depTerminalId != null">li_te_depTerminalId = #{line.li_te_depTerminalId},</if>
+    <if test="line.li_te_arrTerminalId != null">li_te_arrTerminalId = #{line.li_te_arrTerminalId},</if>
+    li_use = #{line.li_use}
+    WHERE li_num = #{line.li_num}
+	</update>
+	
+	<!-- 운행 등록 시 노선 번호로 조회 -->
+	<select id="getLineById" resultType="kr.kh.letsKo.vo.LineVO" parameterType="int">
+	    SELECT * FROM line WHERE li_num = #{dr_li_num}
+	</select>
+    <!-- 노선 번호로 조회 -->
+    <select id="getLineByNum" resultType="kr.kh.letsKo.vo.LineVO">
+        SELECT * FROM line WHERE li_num = #{li_num}
+    </select>
+    <select id="isExistingLine" parameterType="kr.kh.letsKo.vo.LineVO" resultType="boolean">
+    SELECT COUNT(*) FROM line
+    WHERE li_te_depTerminalId = #{li_te_depTerminalId}
+      AND li_te_arrTerminalId = #{li_te_arrTerminalId}
+      AND li_use = #{li_use}
+	</select>
+	
+	<!-- 출발터미널 또는 도착터미널에 맞는 노선 불러오기 -->
+    <select id="selectLineByCode" resultType="kr.kh.letsKo.vo.LineVO">
+        SELECT * FROM line 
+        WHERE 
+        	li_te_depTerminalId = #{te_code} 
+        or
+        	li_te_arrTerminalId = #{te_code}
+         
+    </select>
+    
+    <!-- 터미널 삭제시 그 터미널이 등록되어 있는 노선 삭제 -->
+    <delete id="deleteLineByCode">
+		delete from line
+		WHERE 
+        	li_te_depTerminalId = #{te_code} 
+        or
+        	li_te_arrTerminalId = #{te_code}
+	</delete>
+	
+    
+    
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.kh.letsKo.dao.PaymentDAO">
+	<insert id="insertBookPayment">
+		INSERT INTO book (
+			bk_dr_num,  
+			bk_me_id, 
+			bk_date,  
+			bk_adult,  
+			bk_teen, 
+			bk_totalPeople, 
+			bk_fee, 
+			bk_usePoint, 
+			bk_totalPrice, 
+			bk_cancellationStatus,
+			bk_payNum,
+			bk_reservedSeatNum
+		)VALUES(
+			#{bookVO.bk_dr_num},  
+			#{bookVO.bk_me_id}, 
+			now(),  
+			#{bookVO.bk_adult},  
+			#{bookVO.bk_teen}, 
+			#{bookVO.bk_totalPeople}, 
+			#{bookVO.bk_fee}, 
+			#{bookVO.bk_usePoint}, 
+			#{bookVO.bk_totalPrice}, 
+			#{bookVO.bk_cancellationStatus},
+			#{bookVO.bk_payNum},
+			#{bookVO.bk_reservedSeatNum}
+		)
+	</insert>
+	<insert id="insertSeat">
+		INSERT INTO seat (
+			se_selectedSeatNum,
+			se_bus_code
+		)VALUES(
+			#{seatVO.se_selectedSeatNum},  
+			#{seatVO.se_bus_code}  
+		)
+	</insert>
+	<select id="existedSeatCheck" resultType="SeatVO">
+		SELECT se_num 
+		FROM seat
+		WHERE se_bus_code = #{seatVO.se_bus_code}
+		AND se_selectedSeatNum = #{seatVO.se_selectedSeatNum}
+	</select>
+
+</mapper>
